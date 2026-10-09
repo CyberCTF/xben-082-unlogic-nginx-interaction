@@ -1,0 +1,326 @@
+{
+  "generated_by_isoloom": "from isoloom.yml; don't edit: change the spec and run `isoloom generate` (`isoloom check` fails when this file is out of date)",
+  "resolved_version": 1,
+  "name": "xben-082-unlogic-nginx-interaction",
+  "instance": null,
+  "inputs": [],
+  "networks": {
+    "lab": {
+      "cidr": "10.61.125.0/24",
+      "docker_cidr": "10.61.125.0/24",
+      "internet": false,
+      "gateway": null,
+      "gateway_address": "10.61.125.1",
+      "router": null,
+      "controller": "10.61.125.253"
+    }
+  },
+  "reach": [],
+  "machines": {
+    "nginx": {
+      "access": false,
+      "supplied": false,
+      "shapes": [
+        "docker"
+      ],
+      "arch": "amd64",
+      "os": null,
+      "windows": false,
+      "addresses": {
+        "lab": "10.61.125.10"
+      },
+      "docker_addresses": {
+        "lab": "10.61.125.10"
+      },
+      "services": [
+        {
+          "port": 80,
+          "name": "web",
+          "http": true,
+          "publish": 80
+        },
+        {
+          "port": 8081,
+          "name": "web-8081",
+          "http": true,
+          "publish": 8081
+        }
+      ],
+      "depends_on": [
+        "flask-app",
+        "flask-api"
+      ],
+      "inputs": [],
+      "volumes": {},
+      "resources": {
+        "cpus": 1,
+        "memory_mb": 512,
+        "disk_gb": 20
+      },
+      "gateway_of": [],
+      "routes": [],
+      "default_gateway": null,
+      "offline": true
+    },
+    "flask-app": {
+      "access": false,
+      "supplied": false,
+      "shapes": [
+        "docker"
+      ],
+      "arch": "amd64",
+      "os": null,
+      "windows": false,
+      "addresses": {
+        "lab": "10.61.125.20"
+      },
+      "docker_addresses": {
+        "lab": "10.61.125.20"
+      },
+      "services": [
+        {
+          "port": 8080,
+          "name": "web",
+          "http": true,
+          "publish": null
+        }
+      ],
+      "depends_on": [],
+      "inputs": [],
+      "volumes": {},
+      "resources": {
+        "cpus": 1,
+        "memory_mb": 512,
+        "disk_gb": 20
+      },
+      "gateway_of": [],
+      "routes": [],
+      "default_gateway": null,
+      "offline": true
+    },
+    "flask-api": {
+      "access": false,
+      "supplied": false,
+      "shapes": [
+        "docker"
+      ],
+      "arch": "amd64",
+      "os": null,
+      "windows": false,
+      "addresses": {
+        "lab": "10.61.125.30"
+      },
+      "docker_addresses": {
+        "lab": "10.61.125.30"
+      },
+      "services": [
+        {
+          "port": 8081,
+          "name": "web",
+          "http": true,
+          "publish": null
+        }
+      ],
+      "depends_on": [],
+      "inputs": [],
+      "volumes": {},
+      "resources": {
+        "cpus": 1,
+        "memory_mb": 512,
+        "disk_gb": 20
+      },
+      "gateway_of": [],
+      "routes": [],
+      "default_gateway": null,
+      "offline": true
+    }
+  },
+  "start_order": [
+    "flask-app",
+    "flask-api",
+    "nginx"
+  ],
+  "clones": {},
+  "tools": {},
+  "groups": {},
+  "router": null,
+  "controller": {
+    "addresses": {
+      "lab": "10.61.125.253"
+    }
+  },
+  "published": [
+    {
+      "machine": "nginx",
+      "port": 80,
+      "host_port": 80
+    },
+    {
+      "machine": "nginx",
+      "port": 8081,
+      "host_port": 8081
+    }
+  ],
+  "targets": {
+    "possible": [
+      "docker",
+      "hosted",
+      "docker-vm",
+      "cloud-docker",
+      "kubernetes"
+    ],
+    "generated": [
+      "docker",
+      "hosted",
+      "docker-vm",
+      "cloud-docker",
+      "kubernetes"
+    ],
+    "refused": {},
+    "not_possible": {
+      "hybrid": "only when some machines are containers and others are VMs",
+      "vagrant": "needs `vm:` on nginx, flask-app, flask-api",
+      "proxmox": "needs `vm:` on nginx, flask-app, flask-api",
+      "cloud-vm": "needs `vm:` on nginx, flask-app, flask-api",
+      "external": "needs `external:` on nginx, flask-app, flask-api"
+    }
+  },
+  "checks": {
+    "default_position": "networks",
+    "positions": [
+      {
+        "position": "networks",
+        "machine": null,
+        "runner": "isoloom-check",
+        "checks": [
+          {
+            "name": "the Unlogic nginx interaction page answers",
+            "derived": false,
+            "kind": "http",
+            "target": "http://nginx:80/",
+            "expect": "200",
+            "wait": 180
+          },
+          {
+            "name": "nginx hands out the API URL the app fetches",
+            "derived": false,
+            "kind": "script",
+            "target": "checks/probe.sh",
+            "expect": "",
+            "wait": 60
+          }
+        ]
+      },
+      {
+        "position": "nginx",
+        "machine": "nginx",
+        "runner": "isoloom-check-nginx",
+        "checks": [
+          {
+            "name": "flask-app:8080 from nginx",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.61.125.20:8080/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "flask-api:8081 from nginx",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.61.125.30:8081/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "no internet from nginx",
+            "derived": true,
+            "kind": "http",
+            "target": "http://1.1.1.1/",
+            "expect": "blocked",
+            "wait": 0
+          }
+        ]
+      },
+      {
+        "position": "flask-app",
+        "machine": "flask-app",
+        "runner": "isoloom-check-flask-app",
+        "checks": [
+          {
+            "name": "nginx:80 from flask-app",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.61.125.10:80/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "nginx:8081 from flask-app",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.61.125.10:8081/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "flask-api:8081 from flask-app",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.61.125.30:8081/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "no internet from flask-app",
+            "derived": true,
+            "kind": "http",
+            "target": "http://1.1.1.1/",
+            "expect": "blocked",
+            "wait": 0
+          }
+        ]
+      },
+      {
+        "position": "flask-api",
+        "machine": "flask-api",
+        "runner": "isoloom-check-flask-api",
+        "checks": [
+          {
+            "name": "nginx:80 from flask-api",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.61.125.10:80/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "nginx:8081 from flask-api",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.61.125.10:8081/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "flask-app:8080 from flask-api",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.61.125.20:8080/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "no internet from flask-api",
+            "derived": true,
+            "kind": "http",
+            "target": "http://1.1.1.1/",
+            "expect": "blocked",
+            "wait": 0
+          }
+        ]
+      }
+    ]
+  },
+  "message": "Unlogic nginx interaction answers at http://localhost:80/.\nnginx, a Flask app and a Flask API depend on each other. Map the relationships. The flag is /FLAG.txt on the app.\n"
+}
