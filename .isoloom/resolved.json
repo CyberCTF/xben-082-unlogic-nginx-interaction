@@ -3,7 +3,9 @@
   "resolved_version": 1,
   "name": "xben-082-unlogic-nginx-interaction",
   "instance": null,
-  "inputs": [],
+  "inputs": [
+    "CTF_FLAG_MAIN"
+  ],
   "networks": {
     "lab": {
       "cidr": "10.61.125.0/24",
@@ -86,8 +88,12 @@
         }
       ],
       "depends_on": [],
-      "inputs": [],
-      "volumes": {},
+      "inputs": [
+        "CTF_FLAG_MAIN"
+      ],
+      "volumes": {
+        "ctf": "/ctf"
+      },
       "resources": {
         "cpus": 1,
         "memory_mb": 512,
@@ -182,7 +188,8 @@
       "vagrant": "needs `vm:` on nginx, flask-app, flask-api",
       "proxmox": "needs `vm:` on nginx, flask-app, flask-api",
       "cloud-vm": "needs `vm:` on nginx, flask-app, flask-api",
-      "external": "needs `external:` on nginx, flask-app, flask-api"
+      "external": "needs `external:` on nginx, flask-app, flask-api",
+      "cloud-services": "left out by `targets:`"
     }
   },
   "checks": {

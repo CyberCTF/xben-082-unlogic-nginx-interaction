@@ -9,6 +9,9 @@ services:
   nginx:
     build:
       context: ../../build/nginx
+      labels:
+        isoloom.managed: 'true'
+        isoloom.environment: xben-082-unlogic-nginx-interaction
     image: isoloom/xben-082-unlogic-nginx-interaction-nginx
     platform: linux/amd64
     hostname: nginx
@@ -36,6 +39,8 @@ services:
         condition: service_completed_successfully
       flask-app:
         condition: service_healthy
+      flask-app-init-1:
+        condition: service_completed_successfully
       flask-app-routes:
         condition: service_healthy
       flask-api:
@@ -50,6 +55,8 @@ services:
     labels:
       isoloom.service.web: http:80
       isoloom.service.web-8081: http:8081
+      isoloom.managed: 'true'
+      isoloom.environment: xben-082-unlogic-nginx-interaction
     restart: unless-stopped
   nginx-routes:
     image: alpine:3.20
@@ -71,15 +78,26 @@ services:
       nginx:
         condition: service_started
     restart: unless-stopped
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-082-unlogic-nginx-interaction
   flask-app:
     build:
       context: ../../build/flask-app
+      labels:
+        isoloom.managed: 'true'
+        isoloom.environment: xben-082-unlogic-nginx-interaction
     image: isoloom/xben-082-unlogic-nginx-interaction-flask-app
     platform: linux/amd64
     hostname: flask-app
     networks:
       lab:
         ipv4_address: 10.61.125.20
+    environment:
+      CTF_FLAG_MAIN: ${CTF_FLAG_MAIN:-}
+    volumes:
+    - flask-app-ctf:/ctf
+    - isoloom-probe-amd64:/.isoloom-probe:ro
     healthcheck:
       test:
       - CMD
@@ -91,8 +109,6 @@ services:
       timeout: 3s
       retries: 60
       start_period: 10s
-    volumes:
-    - isoloom-probe-amd64:/.isoloom-probe:ro
     depends_on:
       isoloom-probe-amd64:
         condition: service_completed_successfully
@@ -103,6 +119,8 @@ services:
           memory: 512M
     labels:
       isoloom.service.web: http:8080
+      isoloom.managed: 'true'
+      isoloom.environment: xben-082-unlogic-nginx-interaction
     restart: unless-stopped
   flask-app-routes:
     image: alpine:3.20
@@ -124,9 +142,35 @@ services:
       flask-app:
         condition: service_started
     restart: unless-stopped
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-082-unlogic-nginx-interaction
+  flask-app-init-1:
+    image: isoloom/xben-082-unlogic-nginx-interaction-flask-app
+    entrypoint:
+    - /bin/sh
+    - /isoloom/init/flag.sh
+    volumes:
+    - ../../ctf/flag.sh:/isoloom/init/flag.sh:ro
+    - flask-app-ctf:/ctf
+    network_mode: service:flask-app
+    environment:
+      CTF_FLAG_MAIN: ${CTF_FLAG_MAIN:-}
+    depends_on:
+      flask-app:
+        condition: service_healthy
+      flask-app-routes:
+        condition: service_healthy
+    restart: no
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-082-unlogic-nginx-interaction
   flask-api:
     build:
       context: ../../build/flask-app/app/api
+      labels:
+        isoloom.managed: 'true'
+        isoloom.environment: xben-082-unlogic-nginx-interaction
     image: isoloom/xben-082-unlogic-nginx-interaction-flask-api
     platform: linux/amd64
     hostname: flask-api
@@ -156,6 +200,8 @@ services:
           memory: 512M
     labels:
       isoloom.service.web: http:8081
+      isoloom.managed: 'true'
+      isoloom.environment: xben-082-unlogic-nginx-interaction
     restart: unless-stopped
   flask-api-routes:
     image: alpine:3.20
@@ -177,6 +223,9 @@ services:
       flask-api:
         condition: service_started
     restart: unless-stopped
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-082-unlogic-nginx-interaction
   isoloom-check:
     image: curlimages/curl:8.11.1
     profiles:
@@ -200,12 +249,17 @@ services:
         condition: service_healthy
       flask-app:
         condition: service_healthy
+      flask-app-init-1:
+        condition: service_completed_successfully
       flask-app-routes:
         condition: service_healthy
       flask-api:
         condition: service_healthy
       flask-api-routes:
         condition: service_healthy
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-082-unlogic-nginx-interaction
   isoloom-check-nginx:
     image: curlimages/curl:8.11.1
     profiles:
@@ -223,12 +277,17 @@ services:
         condition: service_healthy
       flask-app:
         condition: service_healthy
+      flask-app-init-1:
+        condition: service_completed_successfully
       flask-app-routes:
         condition: service_healthy
       flask-api:
         condition: service_healthy
       flask-api-routes:
         condition: service_healthy
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-082-unlogic-nginx-interaction
   isoloom-check-flask-app:
     image: curlimages/curl:8.11.1
     profiles:
@@ -246,12 +305,17 @@ services:
         condition: service_healthy
       flask-app:
         condition: service_healthy
+      flask-app-init-1:
+        condition: service_completed_successfully
       flask-app-routes:
         condition: service_healthy
       flask-api:
         condition: service_healthy
       flask-api-routes:
         condition: service_healthy
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-082-unlogic-nginx-interaction
   isoloom-check-flask-api:
     image: curlimages/curl:8.11.1
     profiles:
@@ -269,12 +333,17 @@ services:
         condition: service_healthy
       flask-app:
         condition: service_healthy
+      flask-app-init-1:
+        condition: service_completed_successfully
       flask-app-routes:
         condition: service_healthy
       flask-api:
         condition: service_healthy
       flask-api-routes:
         condition: service_healthy
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-082-unlogic-nginx-interaction
   isoloom-probe-amd64:
     image: busybox:1.37.0-musl
     platform: linux/amd64
@@ -286,11 +355,24 @@ services:
     - isoloom-probe-amd64:/probe
     network_mode: none
     restart: no
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-082-unlogic-nginx-interaction
 networks:
   lab:
     ipam:
       config:
       - subnet: 10.61.125.0/24
         gateway: 10.61.125.1
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-082-unlogic-nginx-interaction
 volumes:
-  isoloom-probe-amd64: {}
+  flask-app-ctf:
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-082-unlogic-nginx-interaction
+  isoloom-probe-amd64:
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-082-unlogic-nginx-interaction
